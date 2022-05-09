@@ -5,5 +5,6 @@ import (
 )
 
 func main() {
-	prioritiser.RunCLI()
+	input := []int{3,5,1}
+	prioritiser.RunCLI(input)
 }
