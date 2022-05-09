@@ -15,12 +15,12 @@ func TestSort(t *testing.T) {
 		want        []int
 	}{
 		{
-			description: "Passing a sorted list",
+			description: "Sorting a sorted list",
 			input:       []int{1, 2, 3, 4, 5},
 			want:        []int{1, 2, 3, 4, 5},
 		},
 		{
-			description: "Passing an unsorted list",
+			description: "Sorting an unsorted list",
 			input:       []int{2, 3, 1, 5, 4},
 			want:        []int{1, 2, 3, 4, 5},
 		},
@@ -28,7 +28,7 @@ func TestSort(t *testing.T) {
 	for _, tt := range SortTests {
 		got := prioritiser.Sort(tt.input)
 		if !cmp.Equal(tt.want, got) {
-			t.Error(cmp.Diff(tt.want, got))
+			t.Error(tt.description, cmp.Diff(tt.want, got))
 		}
 	}
 
