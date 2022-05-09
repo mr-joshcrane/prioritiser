@@ -1,7 +1,9 @@
 package main
 
-import "fmt"
+import (
+	"github.com/mr-joshcrane/prioritiser"
+)
 
 func main() {
-	fmt.Println("hello world")
+	prioritiser.RunCLI()
 }
