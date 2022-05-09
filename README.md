@@ -9,3 +9,12 @@ Keeping it simple. Use the minimum dependencies you need to get the job done. No
 
 Focusing on key user stories first. Build and release a working app that does one thing, rather than a nearly-working app that nearly does five things. It's easier to get the basic design right with something very simple, and once you have the right design it's much easier to add features to it later.
 
+## Thoughts:
+1. Take a list of arbitrary things
+2. Present to user
+3. Pairwise comparisons loop (When are we done?)
+4. Reorder list
+5. Present to user
+
+## When are we done?
+If we assume that priorities are an ordinal data set (ie. ranked only in relative order with no regard to magnitude) then this is simply a sorting problem. Insertion sort is probably a *good enough* algorithm, but the interesting thing is that the user will be determining the relative values of the sorted items. 
