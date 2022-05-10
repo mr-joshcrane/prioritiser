@@ -5,6 +5,6 @@ import (
 )
 
 func main() {
-	input := []int{3,5,1}
+	input := []string{"important task", "slightly important task", "most important task", "least important task"}
 	prioritiser.RunCLI(input)
 }
