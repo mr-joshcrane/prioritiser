@@ -18,3 +18,9 @@ Focusing on key user stories first. Build and release a working app that does on
 
 ## When are we done?
 If we assume that priorities are an ordinal data set (ie. ranked only in relative order with no regard to magnitude) then this is simply a sorting problem. Insertion sort is probably a *good enough* algorithm, but the interesting thing is that the user will be determining the relative values of the sorted items. 
+
+X number top ten
+
+K sorted
+
+sorted function 

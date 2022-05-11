@@ -4,36 +4,28 @@ import (
 	"fmt"
 	"io"
 	"os"
+	"sort"
 )
 
-func Sort(input []string, r io.Reader) []string {
-	return insertionSort(input, r)
-}
-
-func insertionSort(arr []string, r io.Reader) []string {
-	for i := 0; i < len(arr); i++ {
-		for j := i; j > 0 && UserComparison(arr[j-1], arr[j], r); j-- {
-			arr[j], arr[j-1] = arr[j-1], arr[j]
-		}
-	}
-	return arr
-}
-
-func UserComparison(a, b string, r io.Reader) bool {
+func GetUserPreference[T any](a, b T, r io.Reader, w io.Writer) T {
 	s := ""
-	fmt.Printf("Is %s > %s?\n", a, b)
-	fmt.Fscan(r, &s)
-	if s == "y" {
-		return true
+	fmt.Fprintf(w, "Do you prefer %v over %v?\n", a, b)
+	for {
+		fmt.Fscan(r, &s)
+		if s == "y" {
+			return a
+		}
+		if s == "n" {
+			return b
+		}
+		fmt.Fprintf(w, "Invalid response recieved %s include (y) or (n)\n", s)
 	}
-	if s == "n" {
-		return false
-	}
-	fmt.Printf("Invalid response recieved %s include (y) or (n)\n", s)
-	return UserComparison(a, b, r)
 }
 
-func RunCLI(input []string) {
-	sorted := Sort(input, os.Stdin)
-	fmt.Println(sorted)
+func RunCLI(items []string, r io.Reader, w io.Writer) {
+	sort.Slice(items, func(i, j int) bool {
+		pref:= GetUserPreference(items[i], items[j], os.Stdin, os.Stdout)
+		return pref == items[i] 
+	})
+	fmt.Println(items)
 }

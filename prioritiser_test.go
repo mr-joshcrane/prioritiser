@@ -1,49 +1,27 @@
 package prioritiser_test
 
 import (
+	"bytes"
 	"io"
 	"strings"
 	"testing"
 
-	"github.com/google/go-cmp/cmp"
 	"github.com/mr-joshcrane/prioritiser"
 )
 
-//tokeniser?
-var Ordering = map[string]int{
-	"most important task":     0,
-	"important task":          1,
-	"slightly important task": 2,
-	"least important task":    3,
+func TestGetUserPreferenceGivenAAndBReturnsAIfUserEntersY(t *testing.T) {
+	t.Parallel()
+	r := strings.NewReader("y")
+	got := prioritiser.GetUserPreference("preferred", "non-preferred" , r, io.Discard)
+	want := "preferred"
+	if want != got {
+		t.Fatalf("wanted %v, got %v", want, got)
+	}
 }
 
-func TestSort(t *testing.T) {
-	t.Parallel()
-	var SortTests = []struct {
-		description string
-		input       []string
-		responses   io.Reader
-		want        []string
-	}{
-		{
-			description: "Sorting a sorted list",
-			input:       []string{"least important task", "slightly important task", "important task", "most important task"},
-			responses:   strings.NewReader("n\nn\nn\nn\nn\nn\n"),
-			want:        []string{"least important task", "slightly important task", "important task", "most important task"},
-		},
-		{
-			description: "Sorting an unsorted list",
-			input:       []string{"important task", "slightly important task", "most important task", "least important task"},
-			responses:   strings.NewReader("y\nn\ny\ny\ny\n"),
-			want:        []string{"least important task", "slightly important task", "important task", "most important task"},
-		},
-	}
-	for _, tt := range SortTests {
-
-		got := prioritiser.Sort(tt.input, tt.responses)
-		if !cmp.Equal(tt.want, got) {
-			t.Error(tt.description, cmp.Diff(tt.want, got))
-		}
-	}
-
+func TestRunCLIReturnsItemsInDescendingOrderOfImportance(t *testing.T) {
+	input := []string{"high", "low", "medium"}
+	buf := &bytes.Buffer{}
+	r := strings.NewReader("y\nn\nn")
+	prioritiser.RunCLI(input, r, buf)
 }
