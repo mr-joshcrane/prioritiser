@@ -1,12 +1,16 @@
 package main
 
 import (
-	"os"
-
 	"github.com/mr-joshcrane/prioritiser"
 )
 
 func main() {
 	input := prioritiser.RandomList()
-	prioritiser.RunCLI(input, nil, os.Stdin, os.Stdout)
+	priors := []string{"12", "11", "10"}
+	
+	priorities := prioritiser.WithPriorities(input)
+	priorPriorities := prioritiser.WithPriorPriorities(priors)
+
+	p := prioritiser.NewPrioritiser(priorities, priorPriorities)
+	p.RunCLI()
 }

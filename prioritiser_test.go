@@ -12,8 +12,12 @@ import (
 
 func TestGetUserPreferenceGivenAAndBReturnsAIfUserEntersY(t *testing.T) {
 	t.Parallel()
-	r := strings.NewReader("y")
-	got := prioritiser.GetUserPreference("preferred", "non-preferred", r, io.Discard)
+	reader := strings.NewReader("y")
+	readerOption := prioritiser.WithReader[string](reader)
+	writerOption := prioritiser.WithWriter[string](io.Discard)
+	p := prioritiser.NewPrioritiser(readerOption, writerOption)
+
+	got := p.GetUserPreference("preferred", "non-preferred")
 	want := "preferred"
 	if want != got {
 		t.Fatalf("wanted %v, got %v", want, got)
@@ -22,8 +26,12 @@ func TestGetUserPreferenceGivenAAndBReturnsAIfUserEntersY(t *testing.T) {
 
 func TestGetUserPreferenceGivenInvalidInput(t *testing.T) {
 	t.Parallel()
-	r := strings.NewReader("ziggy\nwalrus\nnn\ny")
-	got := prioritiser.GetUserPreference("preferred", "non-preferred", r, io.Discard)
+	reader := strings.NewReader("ziggy\nwalrus\nnn\ny")
+	readerOption := prioritiser.WithReader[string](reader)
+	writerOption := prioritiser.WithWriter[string](io.Discard)
+	p := prioritiser.NewPrioritiser(readerOption, writerOption)
+
+	got := p.GetUserPreference("preferred", "non-preferred")
 	want := "preferred"
 	if want != got {
 		t.Fatalf("wanted %v, got %v", want, got)
@@ -32,13 +40,18 @@ func TestGetUserPreferenceGivenInvalidInput(t *testing.T) {
 
 func TestRunCLIReturnsItemsInDescendingOrderOfImportance(t *testing.T) {
 	t.Parallel()
-	input := []string{"high", "low", "medium"}
+	reader := strings.NewReader("n\ny\nn")
 	buf := &bytes.Buffer{}
+	input := []string{"high", "low", "medium"}
+
+	readerOption := prioritiser.WithReader[string](reader)
+	writerOption := prioritiser.WithWriter[string](buf)
+	pOption := prioritiser.WithPriorities(input)
+	p := prioritiser.NewPrioritiser(readerOption, writerOption, pOption)
+
+	p.RunCLI()
 
 	want := "Do you prefer low over high?\nDo you prefer medium over low?\nDo you prefer medium over high?\n[high medium low]\n"
-	r := strings.NewReader("n\ny\nn")
-
-	prioritiser.RunCLI(input, nil, r, buf)
 	got := buf.String()
 
 	if want != got {
@@ -48,11 +61,19 @@ func TestRunCLIReturnsItemsInDescendingOrderOfImportance(t *testing.T) {
 
 func TestCanMergePreviouslySortedList(t *testing.T) {
 	t.Parallel()
-	prevSorted := []string{"high", "medium", "low"}
-	newItems := []string{"highest", "lowest"}
-	r := strings.NewReader("y\ny\ny\nn\ny\nn")
+	reader := strings.NewReader("y\ny\ny\nn\ny\nn")
+	priorPriorities := []string{"high", "medium", "low"}
+	priorities := []string{"highest", "lowest"}
+
+	readerOption := prioritiser.WithReader[string](reader)
+	writerOption := prioritiser.WithWriter[string](io.Discard)
+	ppOption := prioritiser.WithPriorPriorities(priorPriorities)
+	pOption := prioritiser.WithPriorities(priorities)
+
+	p := prioritiser.NewPrioritiser(readerOption, writerOption, pOption, ppOption)
+
 	want := []string{"highest", "high", "medium", "low", "lowest"}
-	got := prioritiser.MergeLists(newItems, prevSorted, r, io.Discard)
+	got := p.MergeLists()
 	if !cmp.Equal(want, got) {
 		t.Fatalf("wanted %v, got %v", want, got)
 	}
