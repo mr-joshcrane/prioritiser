@@ -7,6 +7,6 @@ import (
 )
 
 func main() {
-	input := []string{"important task", "not important task"}
-	prioritiser.RunCLI(input, os.Stdin, os.Stdout)
+	input := prioritiser.RandomList()
+	prioritiser.RunCLI(input, nil, os.Stdin, os.Stdout)
 }
