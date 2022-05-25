@@ -9,6 +9,35 @@ Keeping it simple. Use the minimum dependencies you need to get the job done. No
 
 Focusing on key user stories first. Build and release a working app that does one thing, rather than a nearly-working app that nearly does five things. It's easier to get the basic design right with something very simple, and once you have the right design it's much easier to add features to it later.
 
+
+1. Sort a list of unsorted items
+```
+prioritise itemsToSort.txt
+...
+Output:
+Sorted Priorities:
+Higginbotham - Midnight in Chernobyl
+Martin - The True Believers
+Pearson - The Profession of Violence
+```
+
+2. Add an item into a presorted list
+```
+prioritise -add sortedItems.txt
+
+Enter Item: "Item"
+<do sort>
+New Item? Y,N
+<do sort>
+<until no new>
+Output:
+Sorted Priorities:
+Higginbotham - Midnight in Chernobyl
+Martin - The True Believers
+New item! - The newest book
+Pearson - The Profession of Violence
+```
+
 ## Thoughts:
 1. Take a list of arbitrary things
 2. Present to user
@@ -24,3 +53,7 @@ X number top ten
 K sorted
 
 sorted function 
+
+// Binary search // Generics 
+// 2 modes add 
+// readme driven dev

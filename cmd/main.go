@@ -6,11 +6,14 @@ import (
 
 func main() {
 	input := prioritiser.RandomList()
-	priors := []string{"12", "11", "10"}
 	
 	priorities := prioritiser.WithPriorities(input)
-	priorPriorities := prioritiser.WithPriorPriorities(priors)
+	p := prioritiser.NewPrioritiser(priorities)
 
-	p := prioritiser.NewPrioritiser(priorities, priorPriorities)
+	// An example of how you might take an already sorted list to integrate new items into
+	// priors := []string{"12", "11", "10"}
+	// priorPriorities := prioritiser.WithPriorPriorities(priors)
+	// p := prioritiser.NewPrioritiser(priorities, priorPriorities)
+
 	p.RunCLI()
 }
