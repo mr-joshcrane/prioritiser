@@ -1,6 +1,7 @@
 package prioritiser
 
 import (
+	"bufio"
 	"flag"
 	"fmt"
 	"io"
@@ -101,13 +102,16 @@ func (p *Prioritiser) MergeLists() []string {
 	return p.priorPriorities
 }
 
-func (p *Prioritiser) GetUserPriorities() []string {
+func (p Prioritiser) GetUserPriorities() []string {
 	var items []string
+	scanner := bufio.NewScanner(p.r)
+
 	for {
 		line := ""
 		fmt.Fprintf(p.w, "Please add your new item.\n")
 		fmt.Fprintf(p.w, "To exit, type Q and enter.\n")
-		fmt.Fscan(p.r, &line)
+		scanner.Scan()
+		line = scanner.Text()
 		if line == "q" || line == "Q" {
 			break
 		}

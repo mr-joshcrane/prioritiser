@@ -11,11 +11,12 @@ import (
 
 func TestGetUserCanAddNewItemsToPreviouslySortedPriorities(t *testing.T) {
 	t.Parallel()
-	reader := strings.NewReader("2\n4\nQ\n2\n1\n1\n2\n1\n2")
+	reader := strings.NewReader("2\n1\n1\n2\n1\n2")
 	readerOption := prioritiser.WithReader(reader)
 	writerOption := prioritiser.WithWriter(io.Discard)
+	pOption := prioritiser.WithPriorities([]string{"2", "4"})
 	ppOption := prioritiser.WithPriorPriorities([]string{"1", "3", "5"})
-	p := prioritiser.NewPrioritiser(readerOption, writerOption, ppOption)
+	p := prioritiser.NewPrioritiser(readerOption, writerOption, ppOption, pOption)
 
 	got := prioritiser.ManagePriorities(p)
 	want := []string{"1", "2", "3", "4", "5"}
