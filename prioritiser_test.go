@@ -1,8 +1,7 @@
 package prioritiser_test
 
 import (
-	"bytes"
-	"fmt"
+	"io"
 	"strings"
 	"testing"
 
@@ -10,17 +9,15 @@ import (
 	"github.com/mr-joshcrane/prioritiser"
 )
 
-func TestGetUserPreferenceGivenAAndBReturnsAIfUserEntersY(t *testing.T) {
+func TestGetUserCanAddNewItemsToPreviouslySortedPriorities(t *testing.T) {
 	t.Parallel()
 	reader := strings.NewReader("2\n4\nQ\n2\n1\n1\n2\n1\n2")
-	buf := bytes.Buffer{}
 	readerOption := prioritiser.WithReader(reader)
-	writerOption := prioritiser.WithWriter(&buf)
+	writerOption := prioritiser.WithWriter(io.Discard)
 	ppOption := prioritiser.WithPriorPriorities([]string{"1", "3", "5"})
 	p := prioritiser.NewPrioritiser(readerOption, writerOption, ppOption)
 
-	got := p.RunCLI()
-	fmt.Println(buf.String())
+	got := prioritiser.ManagePriorities(p)
 	want := []string{"1", "2", "3", "4", "5"}
 	if !cmp.Equal(want, got) {
 		t.Fatalf("wanted %v, got %v", want, got)

@@ -4,11 +4,11 @@ import (
 	"flag"
 	"fmt"
 	"io"
-	"math/rand"
 	"os"
 	"sort"
 	"strings"
-	"time"
+
+	"golang.org/x/exp/slices"
 )
 
 type Prioritiser struct {
@@ -118,6 +118,21 @@ func (p *Prioritiser) GetUserPriorities() []string {
 	return items
 }
 
+func ManagePriorities(p *Prioritiser) []string {
+	if p.priorities == nil {
+		p.priorities = p.GetUserPriorities()
+	}
+	p.Sort()
+	if p.priorPriorities != nil {
+		p.MergeLists()
+	}
+	fmt.Fprintln(p.w, "Sorted Priorities:")
+	for _, v := range p.priorPriorities {
+		fmt.Fprintln(p.w, v)
+	}
+	return p.priorPriorities
+}
+
 func RunCLI() {
 	addMode := flag.Bool("add", false, "Adds a new item to an already sorted list")
 	flag.Parse()
@@ -132,34 +147,15 @@ func RunCLI() {
 		os.Exit(1)
 	}
 	s := strings.Split(string(input), "\n")
-	t := []string{}
-	for _, v := range s {
-		if v != "" {
-			t = append(t, v)
+	for i, v := range s {
+		if v == "" {
+			s = slices.Delete(s, i, i+1)
 		}
 	}
-	priorities := WithPriorities(t)
+	opts := WithPriorities(s)
 	if *addMode {
-		priorities = WithPriorPriorities(t)
+		opts = WithPriorPriorities(s)
 	}
-	p := NewPrioritiser(priorities)
-
-	if p.priorities == nil {
-		p.priorities = p.GetUserPriorities()
-	}
-	p.Sort()
-	if p.priorPriorities != nil {
-		p.MergeLists()
-	}
-	fmt.Fprintln(p.w, "Sorted Priorities:")
-	for _, v := range p.priorPriorities {
-		fmt.Fprintln(p.w, v)
-	}
-}
-
-func RandomList() []string {
-	list := []string{"1", "2", "3", "4", "5"}
-	rand.Seed(time.Now().Unix())
-	rand.Shuffle(len(list), func(i, j int) { list[i], list[j] = list[j], list[i] })
-	return list
+	p := NewPrioritiser(opts)
+	ManagePriorities(p)
 }
