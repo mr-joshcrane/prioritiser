@@ -60,16 +60,16 @@ func NewPrioritiser[T comparable](opts ...PrioritiserOption[T]) *Prioritiser[T] 
 
 func (p *Prioritiser[T]) GetUserPreference(a, b T) T {
 	s := ""
-	fmt.Fprintf(p.w, "Do you prefer %v over %v?\n", a, b)
+	fmt.Fprintf(p.w, "\n1. %v\nOR\n2.%v?\n", a, b)
 	for {
 		fmt.Fscan(p.r, &s)
-		if s == "y" {
+		if s == "1" {
 			return a
 		}
-		if s == "n" {
+		if s == "2" {
 			return b
 		}
-		fmt.Fprintf(p.w, "Invalid response recieved %s include (y) or (n)\n", s)
+		fmt.Fprintf(p.w, "Invalid response recieved %s include (1) or (2)\n", s)
 	}
 }
 
@@ -101,11 +101,20 @@ func (p *Prioritiser[T]) MergeLists() []T {
 }
 
 func (p *Prioritiser[T]) RunCLI() {
+	if p.priorities == nil {
+		//ask the user for priorities until done
+		fmt.Fprintln(p.w, "Priorities please!")
+		fmt.Fscan(p.r)
+	}
 	result := p.Sort()
 	if p.priorPriorities != nil {
 		result = p.MergeLists()
 	}
-	fmt.Fprintln(p.w, result)
+	fmt.Fprintln(p.w, "Sorted Priorities:")
+	for _, v := range result {
+		fmt.Fprintln(p.w, v)
+	}
+
 }
 
 func RandomList() []string {
