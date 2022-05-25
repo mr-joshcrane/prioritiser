@@ -1,53 +1,59 @@
 package prioritiser
 
 import (
+	"bufio"
 	"fmt"
-	"golang.org/x/exp/slices"
 	"io"
 	"math/rand"
 	"os"
 	"sort"
 	"time"
+
+	"github.com/google/go-cmp/cmp"
 )
 
-type Prioritiser[T comparable] struct {
+type Prioritiser[T Prioritisables] struct {
 	r               io.Reader
 	w               io.Writer
 	priorities      []T
 	priorPriorities []T
 }
 
-type PrioritiserOption[T comparable] func(*Prioritiser[T]) *Prioritiser[T]
+type Prioritisables interface {
+	~string
+}
 
-func WithReader[T comparable](r io.Reader) PrioritiserOption[T] {
+type PrioritiserOption[T Prioritisables] func(*Prioritiser[T]) *Prioritiser[T]
+
+func WithReader[T Prioritisables](r io.Reader) PrioritiserOption[T] {
 	return func(p *Prioritiser[T]) *Prioritiser[T] {
 		p.r = r
 		return p
 	}
 }
 
-func WithWriter[T comparable](w io.Writer) PrioritiserOption[T] {
+func WithWriter[T Prioritisables](w io.Writer) PrioritiserOption[T] {
 	return func(p *Prioritiser[T]) *Prioritiser[T] {
 		p.w = w
 		return p
 	}
 }
 
-func WithPriorities[T comparable](priorities []T) PrioritiserOption[T] {
+func WithPriorities[T Prioritisables](priorities []T) PrioritiserOption[T] {
 	return func(p *Prioritiser[T]) *Prioritiser[T] {
 		p.priorities = priorities
 		return p
 	}
 }
 
-func WithPriorPriorities[T comparable](priorPriorities []T) PrioritiserOption[T] {
+func WithPriorPriorities[T Prioritisables](priorPriorities []T) PrioritiserOption[T] {
 	return func(p *Prioritiser[T]) *Prioritiser[T] {
 		p.priorPriorities = priorPriorities
 		return p
 	}
 }
 
-func NewPrioritiser[T comparable](opts ...PrioritiserOption[T]) *Prioritiser[T] {
+func NewPrioritiser[T Prioritisables](opts ...PrioritiserOption[T]) *Prioritiser[T] {
 	p := Prioritiser[T]{
 		r: os.Stdin,
 		w: os.Stdout,
@@ -60,9 +66,11 @@ func NewPrioritiser[T comparable](opts ...PrioritiserOption[T]) *Prioritiser[T] 
 
 func (p *Prioritiser[T]) GetUserPreference(a, b T) T {
 	s := ""
-	fmt.Fprintf(p.w, "\n1. %v\nOR\n2.%v?\n", a, b)
+	fmt.Fprintf(p.w, "\n1. %v\nOR\n2. %v?\n", a, b)
 	for {
 		fmt.Fscan(p.r, &s)
+		fmt.Fprintf(p.w, "Selected %s\n", s)
+
 		if s == "1" {
 			return a
 		}
@@ -84,7 +92,7 @@ func (p *Prioritiser[T]) Sort() []T {
 func (p *Prioritiser[T]) MergeOne(item T, l []T) []T {
 	items := append(l, item)
 	sort.Slice(items, func(i, j int) bool {
-		if slices.Contains(l, items[i]) && slices.Contains(l, items[j]) {
+		if (item != items[i]) && (item != items[j]) {
 			return i < j
 		}
 		pref := p.GetUserPreference(items[i], items[j])
@@ -100,21 +108,34 @@ func (p *Prioritiser[T]) MergeLists() []T {
 	return p.priorPriorities
 }
 
-func (p *Prioritiser[T]) RunCLI() {
+func (p *Prioritiser[string]) RunCLI() []string {
 	if p.priorities == nil {
-		//ask the user for priorities until done
-		fmt.Fprintln(p.w, "Priorities please!")
-		fmt.Fscan(p.r)
+		p.priorities = func() []string {
+			var items []string
+			for {
+				fmt.Fprintf(p.w, "Please add your new item.\n")
+				fmt.Fprintf(p.w, "If you have no more items, press enter.\n")
+				scanner := bufio.NewScanner(p.r)
+				scanner.Scan()
+				line := scanner.Text()
+
+				if cmp.Equal(line, "") {
+					break
+				}
+				items = append(items, line)
+			}
+			return items
+		}()
 	}
-	result := p.Sort()
+	p.Sort()
 	if p.priorPriorities != nil {
-		result = p.MergeLists()
+		p.MergeLists()
 	}
 	fmt.Fprintln(p.w, "Sorted Priorities:")
-	for _, v := range result {
+	for _, v := range p.priorPriorities {
 		fmt.Fprintln(p.w, v)
 	}
-
+	return p.priorPriorities
 }
 
 func RandomList() []string {
