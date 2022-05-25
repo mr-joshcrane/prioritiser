@@ -12,10 +12,10 @@ import (
 
 func TestGetUserPreferenceGivenAAndBReturnsAIfUserEntersY(t *testing.T) {
 	t.Parallel()
-	reader := strings.NewReader("2\n4\n\n2\n\n1\n1\n2\n1\n2")
+	reader := strings.NewReader("2\n4\nQ\n2\n1\n1\n2\n1\n2")
 	buf := bytes.Buffer{}
-	readerOption := prioritiser.WithReader[string](reader)
-	writerOption := prioritiser.WithWriter[string](&buf)
+	readerOption := prioritiser.WithReader(reader)
+	writerOption := prioritiser.WithWriter(&buf)
 	ppOption := prioritiser.WithPriorPriorities([]string{"1", "3", "5"})
 	p := prioritiser.NewPrioritiser(readerOption, writerOption, ppOption)
 

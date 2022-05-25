@@ -1,60 +1,54 @@
 package prioritiser
 
 import (
-	"bufio"
+	"flag"
 	"fmt"
 	"io"
 	"math/rand"
 	"os"
 	"sort"
+	"strings"
 	"time"
-
-	"github.com/google/go-cmp/cmp"
 )
 
-type Prioritiser[T Prioritisables] struct {
+type Prioritiser struct {
 	r               io.Reader
 	w               io.Writer
-	priorities      []T
-	priorPriorities []T
+	priorities      []string
+	priorPriorities []string
 }
+type PrioritiserOption func(*Prioritiser) *Prioritiser
 
-type Prioritisables interface {
-	~string
-}
-
-type PrioritiserOption[T Prioritisables] func(*Prioritiser[T]) *Prioritiser[T]
-
-func WithReader[T Prioritisables](r io.Reader) PrioritiserOption[T] {
-	return func(p *Prioritiser[T]) *Prioritiser[T] {
+func WithReader(r io.Reader) PrioritiserOption {
+	return func(p *Prioritiser) *Prioritiser {
 		p.r = r
 		return p
 	}
 }
 
-func WithWriter[T Prioritisables](w io.Writer) PrioritiserOption[T] {
-	return func(p *Prioritiser[T]) *Prioritiser[T] {
+func WithWriter(w io.Writer) PrioritiserOption {
+	return func(p *Prioritiser) *Prioritiser {
 		p.w = w
 		return p
 	}
 }
 
-func WithPriorities[T Prioritisables](priorities []T) PrioritiserOption[T] {
-	return func(p *Prioritiser[T]) *Prioritiser[T] {
+func WithPriorities(priorities []string) PrioritiserOption {
+	return func(p *Prioritiser) *Prioritiser {
 		p.priorities = priorities
 		return p
 	}
 }
 
-func WithPriorPriorities[T Prioritisables](priorPriorities []T) PrioritiserOption[T] {
-	return func(p *Prioritiser[T]) *Prioritiser[T] {
+func WithPriorPriorities(priorPriorities []string) PrioritiserOption {
+	return func(p *Prioritiser) *Prioritiser {
 		p.priorPriorities = priorPriorities
 		return p
 	}
 }
 
-func NewPrioritiser[T Prioritisables](opts ...PrioritiserOption[T]) *Prioritiser[T] {
-	p := Prioritiser[T]{
+func NewPrioritiser(opts ...PrioritiserOption) *Prioritiser {
+	p := Prioritiser{
 		r: os.Stdin,
 		w: os.Stdout,
 	}
@@ -64,13 +58,12 @@ func NewPrioritiser[T Prioritisables](opts ...PrioritiserOption[T]) *Prioritiser
 	return &p
 }
 
-func (p *Prioritiser[T]) GetUserPreference(a, b T) T {
+func (p *Prioritiser) GetUserPreference(a, b string) string {
 	s := ""
 	fmt.Fprintf(p.w, "\n1. %v\nOR\n2. %v?\n", a, b)
 	for {
 		fmt.Fscan(p.r, &s)
 		fmt.Fprintf(p.w, "Selected %s\n", s)
-
 		if s == "1" {
 			return a
 		}
@@ -81,7 +74,7 @@ func (p *Prioritiser[T]) GetUserPreference(a, b T) T {
 	}
 }
 
-func (p *Prioritiser[T]) Sort() []T {
+func (p *Prioritiser) Sort() []string {
 	sort.Slice(p.priorities, func(i, j int) bool {
 		pref := p.GetUserPreference(p.priorities[i], p.priorities[j])
 		return pref == p.priorities[i]
@@ -89,7 +82,7 @@ func (p *Prioritiser[T]) Sort() []T {
 	return p.priorities
 }
 
-func (p *Prioritiser[T]) MergeOne(item T, l []T) []T {
+func (p *Prioritiser) MergeOne(item string, l []string) []string {
 	items := append(l, item)
 	sort.Slice(items, func(i, j int) bool {
 		if (item != items[i]) && (item != items[j]) {
@@ -101,31 +94,58 @@ func (p *Prioritiser[T]) MergeOne(item T, l []T) []T {
 	return items
 }
 
-func (p *Prioritiser[T]) MergeLists() []T {
+func (p *Prioritiser) MergeLists() []string {
 	for i := 0; i < len(p.priorities); i++ {
 		p.priorPriorities = p.MergeOne(p.priorities[i], p.priorPriorities)
 	}
 	return p.priorPriorities
 }
 
-func (p *Prioritiser[string]) RunCLI() []string {
-	if p.priorities == nil {
-		p.priorities = func() []string {
-			var items []string
-			for {
-				fmt.Fprintf(p.w, "Please add your new item.\n")
-				fmt.Fprintf(p.w, "If you have no more items, press enter.\n")
-				scanner := bufio.NewScanner(p.r)
-				scanner.Scan()
-				line := scanner.Text()
+func (p *Prioritiser) GetUserPriorities() []string {
+	var items []string
+	for {
+		line := ""
+		fmt.Fprintf(p.w, "Please add your new item.\n")
+		fmt.Fprintf(p.w, "To exit, type Q and enter.\n")
+		fmt.Fscan(p.r, &line)
+		if line == "q" || line == "Q" {
+			break
+		}
+		if line != "" {
+			items = append(items, line)
+		}
+	}
+	return items
+}
 
-				if cmp.Equal(line, "") {
-					break
-				}
-				items = append(items, line)
-			}
-			return items
-		}()
+func RunCLI() {
+	addMode := flag.Bool("add", false, "Adds a new item to an already sorted list")
+	flag.Parse()
+
+	if !(len(os.Args) > 1) {
+		fmt.Fprintf(os.Stderr, "Please supply file path")
+		os.Exit(1)
+	}
+	input, err := os.ReadFile(flag.Arg(0))
+	if err != nil {
+		fmt.Fprintf(os.Stderr, "Failed to open '%s'\n", flag.Arg(0))
+		os.Exit(1)
+	}
+	s := strings.Split(string(input), "\n")
+	t := []string{}
+	for _, v := range s {
+		if v != "" {
+			t = append(t, v)
+		}
+	}
+	priorities := WithPriorities(t)
+	if *addMode {
+		priorities = WithPriorPriorities(t)
+	}
+	p := NewPrioritiser(priorities)
+
+	if p.priorities == nil {
+		p.priorities = p.GetUserPriorities()
 	}
 	p.Sort()
 	if p.priorPriorities != nil {
@@ -135,7 +155,6 @@ func (p *Prioritiser[string]) RunCLI() []string {
 	for _, v := range p.priorPriorities {
 		fmt.Fprintln(p.w, v)
 	}
-	return p.priorPriorities
 }
 
 func RandomList() []string {
