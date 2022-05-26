@@ -15,8 +15,8 @@ func TestGetUserCanAddNewItemsToPreviouslySortedPriorities(t *testing.T) {
 	reader := strings.NewReader("2\n1\n1\n2\n1\n2")
 	readerOption := prioritiser.WithReader(reader)
 	writerOption := prioritiser.WithWriter(io.Discard)
-	pOption := prioritiser.WithPriorities([]string{"2", "4"})
-	ppOption := prioritiser.WithPriorPriorities([]string{"1", "3", "5"})
+	pOption := prioritiser.WithUnsortedPriorities([]string{"2", "4"})
+	ppOption := prioritiser.WithSortedPriorities([]string{"1", "3", "5"})
 	p := prioritiser.NewPrioritiser(readerOption, writerOption, ppOption, pOption)
 
 	got := prioritiser.ManagePriorities(p)
@@ -62,7 +62,7 @@ func TestCLIInAddMode(t *testing.T) {
 
 	want := []string{"great book", "average book", "terrible book"}
 	got := p.RunCLI()
-	
+
 	if !cmp.Equal(want, got) {
 		t.Fatalf("wanted %v, got %v", want, got)
 	}
@@ -79,7 +79,7 @@ func TestCLIInNormalMode(t *testing.T) {
 
 	want := []string{"great book", "average book", "terrible book"}
 	got := p.RunCLI()
-	
+
 	if !cmp.Equal(want, got) {
 		t.Fatalf("wanted %v, got %v", want, got)
 	}

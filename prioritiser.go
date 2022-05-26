@@ -13,12 +13,12 @@ import (
 )
 
 type Prioritiser struct {
-	r               io.Reader
-	w               io.Writer
-	input           io.Reader
-	addMode         bool
-	priorities      []string
-	priorPriorities []string
+	r                  io.Reader
+	w                  io.Writer
+	input              io.Reader
+	addMode            bool
+	unsortedPriorities []string
+	sortedPriorities   []string
 }
 type PrioritiserOption func(*Prioritiser) *Prioritiser
 
@@ -50,16 +50,16 @@ func WithAddMode(addMode bool) PrioritiserOption {
 	}
 }
 
-func WithPriorities(priorities []string) PrioritiserOption {
+func WithUnsortedPriorities(priorities []string) PrioritiserOption {
 	return func(p *Prioritiser) *Prioritiser {
-		p.priorities = priorities
+		p.unsortedPriorities = priorities
 		return p
 	}
 }
 
-func WithPriorPriorities(priorPriorities []string) PrioritiserOption {
+func WithSortedPriorities(priorPriorities []string) PrioritiserOption {
 	return func(p *Prioritiser) *Prioritiser {
-		p.priorPriorities = priorPriorities
+		p.sortedPriorities = priorPriorities
 		return p
 	}
 }
@@ -92,11 +92,11 @@ func (p *Prioritiser) GetUserPreference(a, b string) string {
 }
 
 func (p *Prioritiser) Sort() []string {
-	sort.Slice(p.priorities, func(i, j int) bool {
-		pref := p.GetUserPreference(p.priorities[i], p.priorities[j])
-		return pref == p.priorities[i]
+	sort.Slice(p.unsortedPriorities, func(i, j int) bool {
+		pref := p.GetUserPreference(p.unsortedPriorities[i], p.unsortedPriorities[j])
+		return pref == p.unsortedPriorities[i]
 	})
-	return p.priorities
+	return p.unsortedPriorities
 }
 
 func (p *Prioritiser) MergeOne(item string, l []string) []string {
@@ -112,10 +112,10 @@ func (p *Prioritiser) MergeOne(item string, l []string) []string {
 }
 
 func (p *Prioritiser) MergeLists() []string {
-	for i := 0; i < len(p.priorities); i++ {
-		p.priorPriorities = p.MergeOne(p.priorities[i], p.priorPriorities)
+	for i := 0; i < len(p.unsortedPriorities); i++ {
+		p.sortedPriorities = p.MergeOne(p.unsortedPriorities[i], p.sortedPriorities)
 	}
-	return p.priorPriorities
+	return p.sortedPriorities
 }
 
 func (p Prioritiser) GetUserPriorities() []string {
@@ -139,11 +139,11 @@ func (p Prioritiser) GetUserPriorities() []string {
 }
 
 func ManagePriorities(p *Prioritiser) []string {
-	if p.priorities == nil {
-		p.priorities = p.GetUserPriorities()
+	if p.unsortedPriorities == nil {
+		p.unsortedPriorities = p.GetUserPriorities()
 	}
 	result := p.Sort()
-	if p.priorPriorities != nil {
+	if p.sortedPriorities != nil {
 		result = p.MergeLists()
 	}
 	return result
@@ -171,9 +171,9 @@ func ValidateInput(input io.Reader) []string {
 func (p *Prioritiser) RunCLI() []string {
 	s := ValidateInput(p.input)
 	if p.addMode {
-		p.priorPriorities = s
+		p.sortedPriorities = s
 	} else {
-		p.priorities = s
+		p.unsortedPriorities = s
 	}
 	priorities := ManagePriorities(p)
 	OutputPriorities(p.w, priorities)
