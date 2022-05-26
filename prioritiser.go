@@ -126,16 +126,18 @@ func ManagePriorities(p *Prioritiser) []string {
 	if p.priorities == nil {
 		p.priorities = p.GetUserPriorities()
 	}
-	p.Sort()
+	result := p.Sort()
 	if p.priorPriorities != nil {
-		p.MergeLists()
+		result = p.MergeLists()
 	}
-	p.priorPriorities = p.priorities
-	fmt.Fprintln(p.w, "Sorted Priorities:")
-	for _, v := range p.priorPriorities {
-		fmt.Fprintln(p.w, v)
-	}
-	return p.priorPriorities
+	return result
+}
+
+func OutputPriorities(w io.Writer, priorities []string) {
+	fmt.Fprintln(w, "Sorted Priorities:")
+	for _, v := range priorities {
+		fmt.Fprintln(w, v)
+	}  
 }
 
 func ValidateInput(input []byte) []string {
@@ -168,5 +170,6 @@ func RunCLI() {
 		opts = WithPriorPriorities(s)
 	}
 	p := NewPrioritiser(opts)
-	ManagePriorities(p)
+	priorities := ManagePriorities(p)
+	OutputPriorities(p.w, priorities)
 }
