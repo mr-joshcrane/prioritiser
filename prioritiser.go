@@ -130,6 +130,7 @@ func ManagePriorities(p *Prioritiser) []string {
 	if p.priorPriorities != nil {
 		p.MergeLists()
 	}
+	p.priorPriorities = p.priorities
 	fmt.Fprintln(p.w, "Sorted Priorities:")
 	for _, v := range p.priorPriorities {
 		fmt.Fprintln(p.w, v)
