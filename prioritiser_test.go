@@ -12,7 +12,6 @@ import (
 
 func TestGetUserCanAddNewItemsToPreviouslySortedPriorities(t *testing.T) {
 	t.Parallel()
-
 	reader := strings.NewReader("2\n2\n1\n2\n2\n1\n1")
 	readerOption := prioritiser.WithReader(reader)
 	writerOption := prioritiser.WithWriter(io.Discard)
@@ -40,7 +39,6 @@ func TestGetUserPrioritiesCanGatherPrioritiesFromUserInput(t *testing.T) {
 		t.Fatalf("wanted %v, got %v", want, got)
 	}
 }
-
 
 func TestUserCantEnterDuplicatePriorities(t *testing.T) {
 	t.Parallel()

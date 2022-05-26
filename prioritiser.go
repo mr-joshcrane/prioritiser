@@ -200,9 +200,9 @@ func (p *Prioritiser) RunCLI() {
 }
 
 func reverse(input []string) []string {
-    var output []string
-    for i := len(input) - 1; i >= 0; i-- {
-        output = append(output, input[i])
-    }
-    return output
+	var output []string
+	for i := len(input) - 1; i >= 0; i-- {
+		output = append(output, input[i])
+	}
+	return output
 }
