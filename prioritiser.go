@@ -137,6 +137,16 @@ func ManagePriorities(p *Prioritiser) []string {
 	return p.priorPriorities
 }
 
+func ValidateInput(input []byte) []string {
+	s := strings.Split(string(input), "\n")
+	for i := len(s) -1; i >= 0; i-- {
+		if s[i] == "" {
+			s = slices.Delete(s, i, i+1)
+		}
+	}
+	return s
+}
+
 func RunCLI() {
 	addMode := flag.Bool("add", false, "Adds a new item to an already sorted list")
 	flag.Parse()
@@ -150,12 +160,8 @@ func RunCLI() {
 		fmt.Fprintf(os.Stderr, "Failed to open '%s'\n", flag.Arg(0))
 		os.Exit(1)
 	}
-	s := strings.Split(string(input), "\n")
-	for i, v := range s {
-		if v == "" {
-			s = slices.Delete(s, i, i+1)
-		}
-	}
+	s := ValidateInput(input)
+
 	opts := WithPriorities(s)
 	if *addMode {
 		opts = WithPriorPriorities(s)

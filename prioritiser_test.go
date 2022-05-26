@@ -25,70 +25,26 @@ func TestGetUserCanAddNewItemsToPreviouslySortedPriorities(t *testing.T) {
 	}
 }
 
-// func TestGetUserPreferenceGivenAAndBReturnsAIfUserEntersY(t *testing.T) {
-// 	t.Parallel()
-// 	reader := strings.NewReader("y")
-// 	readerOption := prioritiser.WithReader[string](reader)
-// 	writerOption := prioritiser.WithWriter[string](io.Discard)
-// 	p := prioritiser.NewPrioritiser(readerOption, writerOption)
+func TestGetUserPrioritiesCanGatherPrioritiesFromUserInput(t *testing.T) {
+	t.Parallel()
+	reader := strings.NewReader("great book\naverage book\nterrible book\nQ\n")
+	readerOption := prioritiser.WithReader(reader)
+	writerOption := prioritiser.WithWriter(io.Discard)
+	p := prioritiser.NewPrioritiser(readerOption, writerOption)
 
-// 	got := p.GetUserPreference("preferred", "non-preferred")
-// 	want := "preferred"
-// 	if want != got {
-// 		t.Fatalf("wanted %v, got %v", want, got)
-// 	}
+	got := p.GetUserPriorities()
+	want := []string{"great book", "average book", "terrible book"}
+	if !cmp.Equal(want, got) {
+		t.Fatalf("wanted %v, got %v", want, got)
+	}
+}
 
-// func TestGetUserPreferenceGivenInvalidInput(t *testing.T) {
-// 	t.Parallel()
-// 	reader := strings.NewReader("ziggy\nwalrus\nnn\ny")
-// 	readerOption := prioritiser.WithReader[string](reader)
-// 	writerOption := prioritiser.WithWriter[string](io.Discard)
-// 	p := prioritiser.NewPrioritiser(readerOption, writerOption)
-
-// 	got := p.GetUserPreference("preferred", "non-preferred")
-// 	want := "preferred"
-// 	if want != got {
-// 		t.Fatalf("wanted %v, got %v", want, got)
-// 	}
-// }
-
-// func TestRunCLIReturnsItemsInDescendingOrderOfImportance(t *testing.T) {
-// 	t.Parallel()
-// 	reader := strings.NewReader("n\ny\nn")
-// 	buf := &bytes.Buffer{}
-// 	input := []string{"high", "low", "medium"}
-
-// 	readerOption := prioritiser.WithReader[string](reader)
-// 	writerOption := prioritiser.WithWriter[string](buf)
-// 	pOption := prioritiser.WithPriorities(input)
-// 	p := prioritiser.NewPrioritiser(readerOption, writerOption, pOption)
-
-// 	p.RunCLI()
-
-// 	want := "Do you prefer low over high?\nDo you prefer medium over low?\nDo you prefer medium over high?\n[high medium low]\n"
-// 	got := buf.String()
-
-// 	if want != got {
-// 		t.Fatalf("wanted %v, got %v", want, got)
-// 	}
-// }
-
-// func TestCanMergePreviouslySortedList(t *testing.T) {
-// 	t.Parallel()
-// 	reader := strings.NewReader("y\ny\ny\nn\ny\nn")
-// 	priorPriorities := []string{"high", "medium", "low"}
-// 	priorities := []string{"highest", "lowest"}
-
-// 	readerOption := prioritiser.WithReader[string](reader)
-// 	writerOption := prioritiser.WithWriter[string](io.Discard)
-// 	ppOption := prioritiser.WithPriorPriorities(priorPriorities)
-// 	pOption := prioritiser.WithPriorities(priorities)
-
-// 	p := prioritiser.NewPrioritiser(readerOption, writerOption, pOption, ppOption)
-
-// 	want := []string{"highest", "high", "medium", "low", "lowest"}
-// 	got := p.MergeLists()
-// 	if !cmp.Equal(want, got) {
-// 		t.Fatalf("wanted %v, got %v", want, got)
-// 	}
-// }
+func TestUserInputIsValidatedWithBlankItemsRemoved(t *testing.T) {
+	t.Parallel()
+	input := []byte("great book\n\n\n\naverage book\nterrible book\n\n\n")
+	got := prioritiser.ValidateInput(input)
+	want := []string{"great book", "average book", "terrible book"}
+	if !cmp.Equal(want, got) {
+		t.Fatalf("wanted %v, got %v", want, got)
+	}
+}
