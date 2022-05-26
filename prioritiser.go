@@ -168,7 +168,7 @@ func ValidateInput(input io.Reader) []string {
 	return s
 }
 
-func (p *Prioritiser) RunCLI() []string {
+func (p *Prioritiser) RunCLI() {
 	s := ValidateInput(p.input)
 	if p.addMode {
 		p.sortedPriorities = s
@@ -177,5 +177,4 @@ func (p *Prioritiser) RunCLI() []string {
 	}
 	priorities := ManagePriorities(p)
 	OutputPriorities(p.w, priorities)
-	return priorities
 }
