@@ -2,7 +2,7 @@ package prioritiser
 
 import (
 	"bufio"
-	"flag"
+	"bytes"
 	"fmt"
 	"io"
 	"os"
@@ -15,6 +15,8 @@ import (
 type Prioritiser struct {
 	r               io.Reader
 	w               io.Writer
+	input           io.Reader
+	addMode         bool
 	priorities      []string
 	priorPriorities []string
 }
@@ -30,6 +32,20 @@ func WithReader(r io.Reader) PrioritiserOption {
 func WithWriter(w io.Writer) PrioritiserOption {
 	return func(p *Prioritiser) *Prioritiser {
 		p.w = w
+		return p
+	}
+}
+
+func WithInput(input io.Reader) PrioritiserOption {
+	return func(p *Prioritiser) *Prioritiser {
+		p.input = input
+		return p
+	}
+}
+
+func WithAddMode(addMode bool) PrioritiserOption {
+	return func(p *Prioritiser) *Prioritiser {
+		p.addMode = addMode
 		return p
 	}
 }
@@ -137,12 +153,14 @@ func OutputPriorities(w io.Writer, priorities []string) {
 	fmt.Fprintln(w, "Sorted Priorities:")
 	for _, v := range priorities {
 		fmt.Fprintln(w, v)
-	}  
+	}
 }
 
-func ValidateInput(input []byte) []string {
-	s := strings.Split(string(input), "\n")
-	for i := len(s) -1; i >= 0; i-- {
+func ValidateInput(input io.Reader) []string {
+	buf := new(bytes.Buffer)
+	buf.ReadFrom(input)
+	s := strings.Split(buf.String(), "\n")
+	for i := len(s) - 1; i >= 0; i-- {
 		if s[i] == "" {
 			s = slices.Delete(s, i, i+1)
 		}
@@ -150,26 +168,14 @@ func ValidateInput(input []byte) []string {
 	return s
 }
 
-func RunCLI() {
-	addMode := flag.Bool("add", false, "Adds a new item to an already sorted list")
-	flag.Parse()
-
-	if !(len(os.Args) > 1) {
-		fmt.Fprintf(os.Stderr, "Please supply file path")
-		os.Exit(1)
+func (p *Prioritiser) RunCLI() []string {
+	s := ValidateInput(p.input)
+	if p.addMode {
+		p.priorPriorities = s
+	} else {
+		p.priorities = s
 	}
-	input, err := os.ReadFile(flag.Arg(0))
-	if err != nil {
-		fmt.Fprintf(os.Stderr, "Failed to open '%s'\n", flag.Arg(0))
-		os.Exit(1)
-	}
-	s := ValidateInput(input)
-
-	opts := WithPriorities(s)
-	if *addMode {
-		opts = WithPriorPriorities(s)
-	}
-	p := NewPrioritiser(opts)
 	priorities := ManagePriorities(p)
 	OutputPriorities(p.w, priorities)
+	return priorities
 }
