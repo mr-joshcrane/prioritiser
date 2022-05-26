@@ -19,6 +19,7 @@ type Prioritiser struct {
 	addMode            bool
 	unsortedPriorities []string
 	sortedPriorities   []string
+	lookupTable        map[string]int
 }
 type PrioritiserOption func(*Prioritiser) *Prioritiser
 
@@ -66,8 +67,9 @@ func WithSortedPriorities(priorPriorities []string) PrioritiserOption {
 
 func NewPrioritiser(opts ...PrioritiserOption) *Prioritiser {
 	p := Prioritiser{
-		r: os.Stdin,
-		w: os.Stdout,
+		r:           os.Stdin,
+		w:           os.Stdout,
+		lookupTable: map[string]int{},
 	}
 	for _, opt := range opts {
 		opt(&p)
@@ -91,6 +93,30 @@ func (p *Prioritiser) GetUserPreference(a, b string) string {
 	}
 }
 
+func (p *Prioritiser) GetUserPreferenceBS(a, b string) int {
+	if val, ok := p.lookupTable[a+b]; ok {
+		return val
+	}
+	if val, ok := p.lookupTable[b+a]; ok {
+		return val
+	}
+	s := ""
+	fmt.Fprintf(p.w, "\n1. %v\nOR\n2. %v?\n", a, b)
+	for {
+		fmt.Fscan(p.r, &s)
+		fmt.Fprintf(p.w, "Selected %s\n", s)
+		if s == "1" {
+			p.lookupTable[a+b] = 1
+			return p.lookupTable[a+b]
+		}
+		if s == "2" {
+			p.lookupTable[b+a] = -1
+			return p.lookupTable[b+a]
+		}
+		fmt.Fprintf(p.w, "Invalid response recieved %s include (1) or (2)\n", s)
+	}
+}
+
 func (p *Prioritiser) Sort() []string {
 	sort.Slice(p.unsortedPriorities, func(i, j int) bool {
 		pref := p.GetUserPreference(p.unsortedPriorities[i], p.unsortedPriorities[j])
@@ -100,20 +126,13 @@ func (p *Prioritiser) Sort() []string {
 }
 
 func (p *Prioritiser) MergeOne(item string, l []string) []string {
-	items := append(l, item)
-	sort.Slice(items, func(i, j int) bool {
-		if (item != items[i]) && (item != items[j]) {
-			return i < j
-		}
-		pref := p.GetUserPreference(items[i], items[j])
-		return pref == items[i]
-	})
-	return items
+	i, _ := slices.BinarySearchFunc(l, item, p.GetUserPreferenceBS)
+	return slices.Insert(l, i, item)
 }
 
 func (p *Prioritiser) MergeLists() []string {
 	for i := 0; i < len(p.unsortedPriorities); i++ {
-		p.sortedPriorities = p.MergeOne(p.unsortedPriorities[i], p.sortedPriorities)
+		p.sortedPriorities = reverse(p.MergeOne(p.unsortedPriorities[i], reverse(p.sortedPriorities)))
 	}
 	return p.sortedPriorities
 }
@@ -121,7 +140,6 @@ func (p *Prioritiser) MergeLists() []string {
 func (p Prioritiser) GetUserPriorities() []string {
 	var items []string
 	scanner := bufio.NewScanner(p.r)
-
 	for {
 		line := ""
 		fmt.Fprintf(p.w, "Please add your new item.\n")
@@ -131,7 +149,9 @@ func (p Prioritiser) GetUserPriorities() []string {
 		if line == "q" || line == "Q" {
 			break
 		}
-		if line != "" {
+		isPreviousPriority := slices.Contains(p.sortedPriorities, line)
+		isDuplicateEntry := slices.Contains(items, line)
+		if line != "" && !isPreviousPriority && !isDuplicateEntry {
 			items = append(items, line)
 		}
 	}
@@ -177,4 +197,12 @@ func (p *Prioritiser) RunCLI() {
 	}
 	priorities := ManagePriorities(p)
 	OutputPriorities(p.w, priorities)
+}
+
+func reverse(input []string) []string {
+    var output []string
+    for i := len(input) - 1; i >= 0; i-- {
+        output = append(output, input[i])
+    }
+    return output
 }
