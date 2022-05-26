@@ -93,7 +93,7 @@ func (p *Prioritiser) GetUserPreference(a, b string) string {
 	}
 }
 
-func (p *Prioritiser) GetUserPreferenceBS(a, b string) int {
+func (p *Prioritiser) GetUserPreferenceBinarySearch(a, b string) int {
 	if val, ok := p.lookupTable[a+b]; ok {
 		return val
 	}
@@ -126,7 +126,7 @@ func (p *Prioritiser) Sort() []string {
 }
 
 func (p *Prioritiser) MergeOne(item string, l []string) []string {
-	i, _ := slices.BinarySearchFunc(l, item, p.GetUserPreferenceBS)
+	i, _ := slices.BinarySearchFunc(l, item, p.GetUserPreferenceBinarySearch)
 	return slices.Insert(l, i, item)
 }
 
