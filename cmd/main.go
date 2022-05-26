@@ -1,19 +1,27 @@
 package main
 
 import (
+	"flag"
+	"fmt"
+	"os"
+
 	"github.com/mr-joshcrane/prioritiser"
 )
 
 func main() {
-	input := prioritiser.RandomList()
-	
-	priorities := prioritiser.WithPriorities(input)
-	p := prioritiser.NewPrioritiser(priorities)
+	addMode := flag.Bool("add", false, "Adds a new item to an already sorted list")
+	flag.Parse()
+	if !(len(os.Args) > 1) {
+		fmt.Fprintf(os.Stderr, "Please supply file path")
+		os.Exit(1)
+	}
 
-	// An example of how you might take an already sorted list to integrate new items into
-	// priors := []string{"12", "11", "10"}
-	// priorPriorities := prioritiser.WithPriorPriorities(priors)
-	// p := prioritiser.NewPrioritiser(priorities, priorPriorities)
+	input, err := os.Open(flag.Arg(0))
+	if err != nil {
+		fmt.Fprintf(os.Stderr, "Failed to open '%s'\n", flag.Arg(0))
+		os.Exit(1)
+	}
+	p := prioritiser.NewPrioritiser(prioritiser.WithInput(input), prioritiser.WithAddMode(*addMode))
 
 	p.RunCLI()
 }
