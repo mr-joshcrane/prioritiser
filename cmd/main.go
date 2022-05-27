@@ -12,7 +12,7 @@ func main() {
 	addMode := flag.Bool("add", false, "Adds a new item to an already sorted list")
 	flag.Parse()
 	if !(len(os.Args) > 1) {
-		fmt.Fprintf(os.Stderr, "Please supply file path")
+		fmt.Fprintf(os.Stderr, "Please supply file path\nFor example: $ %s books.txt\n", os.Args[0])
 		os.Exit(1)
 	}
 
