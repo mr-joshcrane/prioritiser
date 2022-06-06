@@ -97,9 +97,6 @@ func (p *Prioritiser) GetUserPreferenceBinarySearch(a, b string) int {
 	if val, ok := p.lookupTable[a+b]; ok {
 		return val
 	}
-	if val, ok := p.lookupTable[b+a]; ok {
-		return val
-	}
 	s := ""
 	fmt.Fprintf(p.w, "\n1. %v\nOR\n2. %v?\n", a, b)
 	for {
