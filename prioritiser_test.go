@@ -3,6 +3,7 @@ package prioritiser_test
 import (
 	"bytes"
 	"io"
+	"os"
 	"strings"
 	"testing"
 
@@ -116,6 +117,31 @@ func TestCLIInNormalMode(t *testing.T) {
 	p.RunCLI()
 	output := buf.String()
 	got := strings.Split(output, "\n")
+	got = got[len(got)-4 : len(got)-1]
+	if !cmp.Equal(want, got) {
+		t.Fatalf("wanted %v, got %v", want, got)
+	}
+}
+
+func TestCLIInSaveMode(t *testing.T) {
+	t.Parallel()
+	path := t.TempDir() + "/" + t.Name()
+	input := bytes.NewReader([]byte("great book\n\n\n\naverage book\nterrible book\n\n\n"))
+	reader := strings.NewReader("2\n2\n2")
+	buf := bytes.Buffer{}
+	readerOption := prioritiser.WithReader(reader)
+	writerOption := prioritiser.WithWriter(&buf)
+	inputOption := prioritiser.WithInput(input)
+	saveMode := prioritiser.WithSaveMode(path)
+	p := prioritiser.NewPrioritiser(readerOption, writerOption, inputOption, saveMode)
+
+	want := []string{"great book", "average book", "terrible book"}
+	p.RunCLI()
+	contents, err := os.ReadFile(path)
+	if err != nil {
+		t.Fatal(err)
+	}
+	got := strings.Split(string(contents), "\n")
 	got = got[len(got)-4 : len(got)-1]
 	if !cmp.Equal(want, got) {
 		t.Fatalf("wanted %v, got %v", want, got)

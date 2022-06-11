@@ -17,6 +17,7 @@ type Prioritiser struct {
 	w                  io.Writer
 	input              io.Reader
 	addMode            bool
+	savePath		   string
 	unsortedPriorities []string
 	sortedPriorities   []string
 	lookupTable        map[string]int
@@ -47,6 +48,12 @@ func WithInput(input io.Reader) PrioritiserOption {
 func WithAddMode(addMode bool) PrioritiserOption {
 	return func(p *Prioritiser) *Prioritiser {
 		p.addMode = addMode
+		return p
+	}
+}
+func WithSaveMode(path string) PrioritiserOption {
+	return func(p *Prioritiser) *Prioritiser {
+		p.savePath = path
 		return p
 	}
 }
@@ -194,6 +201,9 @@ func (p *Prioritiser) RunCLI() {
 	}
 	priorities := ManagePriorities(p)
 	OutputPriorities(p.w, priorities)
+	if p.savePath != "" {
+		save(priorities, p.savePath)
+	}
 }
 
 func reverse(input []string) []string {
@@ -202,4 +212,15 @@ func reverse(input []string) []string {
 		output = append(output, input[i])
 	}
 	return output
+}
+
+func save(priorities []string, path string) error {
+	file, err := os.OpenFile(path, os.O_TRUNC|os.O_CREATE|os.O_RDWR, 0644)
+	if err != nil {
+		return err
+	}
+	for _, v := range priorities {
+		file.WriteString(v+"\n")
+	}
+	return nil
 }

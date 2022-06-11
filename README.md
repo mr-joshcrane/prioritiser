@@ -31,4 +31,13 @@ New item! - The newest book
 Pearson - The Profession of Violence
 ```
 
+3. Modify an existing list on disk
+```
+// Save result to a new file called "sortedItems.txt" 
+prioritise -save=sortedItems.txt itemsToSort.txt 
+
+// Save results by overwriting existing file
+proritise -save=books.txt books.txt 
+
+```
 Prioritiser tries it's hardest to respect the users time by efficiently slotting a new priority into a previous list asking the minimum number of questions.
