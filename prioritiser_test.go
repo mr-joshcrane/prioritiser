@@ -132,7 +132,7 @@ func TestCLIInSaveMode(t *testing.T) {
 	readerOption := prioritiser.WithReader(reader)
 	writerOption := prioritiser.WithWriter(&buf)
 	inputOption := prioritiser.WithInput(input)
-	saveMode := prioritiser.WithSaveMode(path)
+	saveMode := prioritiser.WithSaveMode(true, path)
 	p := prioritiser.NewPrioritiser(readerOption, writerOption, inputOption, saveMode)
 
 	want := []string{"great book", "average book", "terrible book"}
@@ -145,5 +145,31 @@ func TestCLIInSaveMode(t *testing.T) {
 	got = got[len(got)-4 : len(got)-1]
 	if !cmp.Equal(want, got) {
 		t.Fatalf("wanted %v, got %v", want, got)
+	}
+}
+
+func TestCLIInSaveModeWhenFileCantBeWrittenTo(t *testing.T) {
+	t.Parallel()
+	path := t.TempDir() + "/" + t.Name()
+	input := bytes.NewReader([]byte("great book\n\n\n\naverage book\nterrible book\n\n\n"))
+	reader := strings.NewReader("2\n2\n2")
+	buf := bytes.Buffer{}
+	readerOption := prioritiser.WithReader(reader)
+	writerOption := prioritiser.WithWriter(&buf)
+	inputOption := prioritiser.WithInput(input)
+	saveMode := prioritiser.WithSaveMode(true, path)
+	p := prioritiser.NewPrioritiser(readerOption, writerOption, inputOption, saveMode)
+
+	_, err := os.Create(path)
+	if err != nil {
+		t.Fatal(err)
+	}
+ 	err = os.Chmod(path, 0444)
+	if err != nil {
+		t.Fatal(err)
+	}
+	err = p.RunCLI()
+	if err == nil {
+		t.Fatalf("expected permission denied error, but got none")
 	}
 }
